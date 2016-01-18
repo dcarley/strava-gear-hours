@@ -47,7 +47,9 @@ func main() {
 
 	activities = FilterActivities(activities, &ByGear{bike})
 	activities = FilterActivities(activities, &ByDate{since})
-	fmt.Println("Activities:", activities)
+
+	duration := SumMovingTime(activities)
+	fmt.Printf("Bike %q used for: %s\n", bike.Name, duration)
 }
 
 // GetBike retrieves a bike by name for the currently logged in user.
@@ -117,4 +119,13 @@ func FilterActivities(activities []*strava.ActivitySummary, filter ActivityFilte
 	}
 
 	return activities
+}
+
+// SumMovingTime returns the total moving time for all `activities`.
+func SumMovingTime(activities []*strava.ActivitySummary) (duration time.Duration) {
+	for _, activity := range activities {
+		duration += time.Duration(activity.MovingTime) * time.Second
+	}
+
+	return
 }

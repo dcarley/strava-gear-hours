@@ -96,25 +96,30 @@ var _ = Describe("main", func() {
 	BeforeEach(func() {
 		activities = []*strava.ActivitySummary{
 			{
-				Name:      "ride 1",
-				GearId:    "123",
-				StartDate: time.Date(2016, time.January, 01, 12, 0, 0, 0, time.UTC),
+				Name:       "ride 1",
+				GearId:     "123",
+				StartDate:  time.Date(2016, time.January, 01, 12, 0, 0, 0, time.UTC),
+				MovingTime: int(time.Hour.Seconds()),
 			}, {
-				Name:      "ride 2",
-				GearId:    "456",
-				StartDate: time.Date(2016, time.February, 01, 12, 0, 0, 0, time.UTC),
+				Name:       "ride 2",
+				GearId:     "456",
+				StartDate:  time.Date(2016, time.February, 01, 12, 0, 0, 0, time.UTC),
+				MovingTime: 0,
 			}, {
-				Name:      "ride 3",
-				GearId:    "123",
-				StartDate: time.Date(2016, time.January, 02, 12, 0, 0, 0, time.UTC),
+				Name:       "ride 3",
+				GearId:     "123",
+				StartDate:  time.Date(2016, time.January, 02, 12, 0, 0, 0, time.UTC),
+				MovingTime: int(2 * time.Hour.Seconds()),
 			}, {
-				Name:      "ride 4",
-				GearId:    "456",
-				StartDate: time.Date(2016, time.February, 02, 12, 0, 0, 0, time.UTC),
+				Name:       "ride 4",
+				GearId:     "456",
+				StartDate:  time.Date(2016, time.February, 02, 12, 0, 0, 0, time.UTC),
+				MovingTime: int(45 * time.Minute.Seconds()),
 			}, {
-				Name:      "ride 5",
-				GearId:    "123",
-				StartDate: time.Date(2016, time.January, 03, 12, 0, 0, 0, time.UTC),
+				Name:       "ride 5",
+				GearId:     "123",
+				StartDate:  time.Date(2016, time.January, 03, 12, 0, 0, 0, time.UTC),
+				MovingTime: int(30 * time.Second.Seconds()),
 			},
 		}
 	})
@@ -288,6 +293,14 @@ var _ = Describe("main", func() {
 
 				Expect(FilterActivities(activities, &ByDate{since})).To(Equal(expected))
 			})
+		})
+	})
+
+	Describe("SumMovingTime", func() {
+		It("should sum moving time from all activities", func() {
+			expected, err := time.ParseDuration("3h45m30s")
+			Expect(err).To(BeNil())
+			Expect(SumMovingTime(activities)).To(Equal(expected))
 		})
 	})
 })
