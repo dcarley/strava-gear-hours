@@ -218,74 +218,76 @@ var _ = Describe("main", func() {
 		})
 	})
 
-	Describe("FilterGear", func() {
-		It("should return activities for gear ID 123", func() {
-			gear := &strava.GearSummary{
-				Id:   "123",
-				Name: "my bike",
-			}
-			expected := []*strava.ActivitySummary{
-				activities[0],
-				activities[2],
-				activities[4],
-			}
+	Describe("FilterActivities", func() {
+		Describe("ByGear", func() {
+			It("should return activities for gear ID 123", func() {
+				gear := &strava.GearSummary{
+					Id:   "123",
+					Name: "my bike",
+				}
+				expected := []*strava.ActivitySummary{
+					activities[0],
+					activities[2],
+					activities[4],
+				}
 
-			Expect(FilterGear(activities, gear)).To(Equal(expected))
+				Expect(FilterActivities(activities, &ByGear{gear})).To(Equal(expected))
+			})
+
+			It("should return activities for gear ID 456", func() {
+				gear := &strava.GearSummary{
+					Id:   "456",
+					Name: "my bike",
+				}
+				expected := []*strava.ActivitySummary{
+					activities[1],
+					activities[3],
+				}
+
+				Expect(FilterActivities(activities, &ByGear{gear})).To(Equal(expected))
+			})
+
+			It("should return no activities for gear ID 789", func() {
+				gear := &strava.GearSummary{
+					Id:   "789",
+					Name: "my bike",
+				}
+				expected := []*strava.ActivitySummary{}
+
+				Expect(FilterActivities(activities, &ByGear{gear})).To(Equal(expected))
+			})
 		})
 
-		It("should return activities for gear ID 456", func() {
-			gear := &strava.GearSummary{
-				Id:   "456",
-				Name: "my bike",
-			}
-			expected := []*strava.ActivitySummary{
-				activities[1],
-				activities[3],
-			}
+		Describe("ByDate", func() {
+			It("should return all activities", func() {
+				since := time.Time{}
+				expected := activities
 
-			Expect(FilterGear(activities, gear)).To(Equal(expected))
-		})
+				Expect(since.IsZero()).To(Equal(true))
+				Expect(FilterActivities(activities, &ByDate{since})).To(Equal(expected))
+			})
 
-		It("should return no activities for gear ID 789", func() {
-			gear := &strava.GearSummary{
-				Id:   "789",
-				Name: "my bike",
-			}
-			expected := []*strava.ActivitySummary{}
+			It("should return activities since Jan 2nd", func() {
+				since := time.Date(2016, time.January, 02, 0, 0, 0, 0, time.UTC)
+				expected := []*strava.ActivitySummary{
+					activities[1],
+					activities[2],
+					activities[3],
+					activities[4],
+				}
 
-			Expect(FilterGear(activities, gear)).To(Equal(expected))
-		})
-	})
+				Expect(FilterActivities(activities, &ByDate{since})).To(Equal(expected))
+			})
 
-	Describe("FilterTime", func() {
-		It("should return all activities", func() {
-			since := time.Time{}
-			expected := activities
+			It("should return activities since Feb 1st", func() {
+				since := time.Date(2016, time.February, 01, 0, 0, 0, 0, time.UTC)
+				expected := []*strava.ActivitySummary{
+					activities[1],
+					activities[3],
+				}
 
-			Expect(since.IsZero()).To(Equal(true))
-			Expect(FilterTime(activities, since)).To(Equal(expected))
-		})
-
-		It("should return activities since Jan 2nd", func() {
-			since := time.Date(2016, time.January, 02, 0, 0, 0, 0, time.UTC)
-			expected := []*strava.ActivitySummary{
-				activities[1],
-				activities[2],
-				activities[3],
-				activities[4],
-			}
-
-			Expect(FilterTime(activities, since)).To(Equal(expected))
-		})
-
-		It("should return activities since Feb 1st", func() {
-			since := time.Date(2016, time.February, 01, 0, 0, 0, 0, time.UTC)
-			expected := []*strava.ActivitySummary{
-				activities[1],
-				activities[3],
-			}
-
-			Expect(FilterTime(activities, since)).To(Equal(expected))
+				Expect(FilterActivities(activities, &ByDate{since})).To(Equal(expected))
+			})
 		})
 	})
 })

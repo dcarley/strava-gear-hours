@@ -45,8 +45,8 @@ func main() {
 		log.Fatalln("Error getting activities:", err)
 	}
 
-	activities = FilterGear(activities, bike)
-	activities = FilterTime(activities, since)
+	activities = FilterActivities(activities, &ByGear{bike})
+	activities = FilterActivities(activities, &ByDate{since})
 	fmt.Println("Activities:", activities)
 }
 
@@ -87,22 +87,30 @@ func GetActivities(client *strava.Client, pageSize int) (activities []*strava.Ac
 	return activities, err
 }
 
-// Return a slice of `activities` that use `gear`.
-func FilterGear(activities []*strava.ActivitySummary, gear *strava.GearSummary) []*strava.ActivitySummary {
-	for i := 0; i < len(activities); i++ {
-		if activities[i].GearId != gear.Id {
-			activities = append(activities[:i], activities[i+1:]...)
-			i--
-		}
-	}
-
-	return activities
+type ActivityFilterer interface {
+	Select(*strava.ActivitySummary) bool
 }
 
-// Return a slice of `activities` that occurred after `since`.
-func FilterTime(activities []*strava.ActivitySummary, since time.Time) []*strava.ActivitySummary {
+type ByGear struct {
+	*strava.GearSummary
+}
+
+func (b *ByGear) Select(activity *strava.ActivitySummary) bool {
+	return activity.GearId != b.Id
+}
+
+type ByDate struct {
+	time.Time
+}
+
+func (b *ByDate) Select(activity *strava.ActivitySummary) bool {
+	return activity.StartDate.Before(b.UTC())
+}
+
+// FilterActivities returns a slice of `activities` that satisfy `filter`.
+func FilterActivities(activities []*strava.ActivitySummary, filter ActivityFilterer) []*strava.ActivitySummary {
 	for i := 0; i < len(activities); i++ {
-		if activities[i].StartDate.Before(since) {
+		if filter.Select(activities[i]) {
 			activities = append(activities[:i], activities[i+1:]...)
 			i--
 		}
