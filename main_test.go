@@ -108,6 +108,68 @@ var _ = Describe("main", func() {
 		}
 	})
 
+	Describe("GetBike", func() {
+		var athlete *strava.AthleteDetailed
+
+		BeforeEach(func() {
+			athlete = &strava.AthleteDetailed{
+				Bikes: []*strava.GearSummary{
+					{
+						Id:       "1",
+						Name:     "road bike",
+						Primary:  false,
+						Distance: 100.00,
+					}, {
+						Id:       "2",
+						Name:     "my best bike",
+						Primary:  false,
+						Distance: 200.00,
+					}, {
+						Id:       "3",
+						Name:     "fat bike",
+						Primary:  false,
+						Distance: 300.00,
+					},
+				},
+			}
+		})
+
+		It("should return matching bike from athlete", func() {
+			buf, err := json.Marshal(athlete)
+			Expect(err).To(BeNil())
+
+			responses := make(chan []byte, 1)
+			responses <- buf
+			client := NewMockClient(responses, http.StatusOK)
+
+			myBike := athlete.Bikes[1]
+			out, err := GetBike(client, myBike.Name)
+			Expect(err).To(BeNil())
+			Expect(out).To(Equal(myBike))
+		})
+
+		It("should return error if unable to find matching bike", func() {
+			buf, err := json.Marshal(athlete)
+			Expect(err).To(BeNil())
+
+			responses := make(chan []byte, 1)
+			responses <- buf
+			client := NewMockClient(responses, http.StatusOK)
+
+			out, err := GetBike(client, "garbage")
+			Expect(err).To(MatchError("bike not found: garbage"))
+			Expect(out).To(BeNil())
+		})
+
+		It("should return errors from HTTP client", func() {
+			client := NewMockClient(nil, http.StatusInternalServerError)
+
+			out, err := GetBike(client, "garbage")
+			Expect(err).To(MatchError("server error"))
+			Expect(out).To(BeNil())
+		})
+	})
+
 	Describe("GetActivities", func() {
 		const pageSize = 2
 
