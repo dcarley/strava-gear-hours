@@ -95,15 +95,20 @@ var _ = Describe("main", func() {
 	BeforeEach(func() {
 		activities = []*strava.ActivitySummary{
 			{
-				Name: "ride 1",
+				Name:   "ride 1",
+				GearId: "123",
 			}, {
-				Name: "ride 2",
+				Name:   "ride 2",
+				GearId: "456",
 			}, {
-				Name: "ride 3",
+				Name:   "ride 3",
+				GearId: "123",
 			}, {
-				Name: "ride 4",
+				Name:   "ride 4",
+				GearId: "456",
 			}, {
-				Name: "ride 5",
+				Name:   "ride 5",
+				GearId: "123",
 			},
 		}
 	})
@@ -204,6 +209,45 @@ var _ = Describe("main", func() {
 			out, err := GetActivities(client, pageSize)
 			Expect(err).To(MatchError("server error"))
 			Expect(out).To(BeNil())
+		})
+	})
+
+	Describe("FilterGear", func() {
+		It("should return activities for gear ID 123", func() {
+			gear := &strava.GearSummary{
+				Id:   "123",
+				Name: "my bike",
+			}
+			expected := []*strava.ActivitySummary{
+				activities[0],
+				activities[2],
+				activities[4],
+			}
+
+			Expect(FilterGear(activities, gear)).To(Equal(expected))
+		})
+
+		It("should return activities for gear ID 456", func() {
+			gear := &strava.GearSummary{
+				Id:   "456",
+				Name: "my bike",
+			}
+			expected := []*strava.ActivitySummary{
+				activities[1],
+				activities[3],
+			}
+
+			Expect(FilterGear(activities, gear)).To(Equal(expected))
+		})
+
+		It("should return no activities for gear ID 789", func() {
+			gear := &strava.GearSummary{
+				Id:   "789",
+				Name: "my bike",
+			}
+			expected := []*strava.ActivitySummary{}
+
+			Expect(FilterGear(activities, gear)).To(Equal(expected))
 		})
 	})
 })

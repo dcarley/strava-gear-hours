@@ -29,12 +29,13 @@ func main() {
 	if err != nil {
 		log.Fatalln("Error getting bike:", err)
 	}
-	log.Println("Bike:", bike)
 
 	activities, err := GetActivities(client, DefaultPageSize)
 	if err != nil {
 		log.Fatalln("Error getting activities:", err)
 	}
+
+	activities = FilterGear(activities, bike)
 	fmt.Println("Activities:", activities)
 }
 
@@ -73,4 +74,16 @@ func GetActivities(client *strava.Client, pageSize int) (activities []*strava.Ac
 	}
 
 	return activities, err
+}
+
+// Return a slice of `activities` that use `gear`.
+func FilterGear(activities []*strava.ActivitySummary, gear *strava.GearSummary) []*strava.ActivitySummary {
+	for i := 0; i < len(activities); i++ {
+		if activities[i].GearId != gear.Id {
+			activities = append(activities[:i], activities[i+1:]...)
+			i--
+		}
+	}
+
+	return activities
 }
