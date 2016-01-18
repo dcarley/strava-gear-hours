@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/strava/go.strava"
 )
@@ -95,20 +96,25 @@ var _ = Describe("main", func() {
 	BeforeEach(func() {
 		activities = []*strava.ActivitySummary{
 			{
-				Name:   "ride 1",
-				GearId: "123",
+				Name:      "ride 1",
+				GearId:    "123",
+				StartDate: time.Date(2016, time.January, 01, 12, 0, 0, 0, time.UTC),
 			}, {
-				Name:   "ride 2",
-				GearId: "456",
+				Name:      "ride 2",
+				GearId:    "456",
+				StartDate: time.Date(2016, time.February, 01, 12, 0, 0, 0, time.UTC),
 			}, {
-				Name:   "ride 3",
-				GearId: "123",
+				Name:      "ride 3",
+				GearId:    "123",
+				StartDate: time.Date(2016, time.January, 02, 12, 0, 0, 0, time.UTC),
 			}, {
-				Name:   "ride 4",
-				GearId: "456",
+				Name:      "ride 4",
+				GearId:    "456",
+				StartDate: time.Date(2016, time.February, 02, 12, 0, 0, 0, time.UTC),
 			}, {
-				Name:   "ride 5",
-				GearId: "123",
+				Name:      "ride 5",
+				GearId:    "123",
+				StartDate: time.Date(2016, time.January, 03, 12, 0, 0, 0, time.UTC),
 			},
 		}
 	})
@@ -248,6 +254,38 @@ var _ = Describe("main", func() {
 			expected := []*strava.ActivitySummary{}
 
 			Expect(FilterGear(activities, gear)).To(Equal(expected))
+		})
+	})
+
+	Describe("FilterTime", func() {
+		It("should return all activities", func() {
+			since := time.Time{}
+			expected := activities
+
+			Expect(since.IsZero()).To(Equal(true))
+			Expect(FilterTime(activities, since)).To(Equal(expected))
+		})
+
+		It("should return activities since Jan 2nd", func() {
+			since := time.Date(2016, time.January, 02, 0, 0, 0, 0, time.UTC)
+			expected := []*strava.ActivitySummary{
+				activities[1],
+				activities[2],
+				activities[3],
+				activities[4],
+			}
+
+			Expect(FilterTime(activities, since)).To(Equal(expected))
+		})
+
+		It("should return activities since Feb 1st", func() {
+			since := time.Date(2016, time.February, 01, 0, 0, 0, 0, time.UTC)
+			expected := []*strava.ActivitySummary{
+				activities[1],
+				activities[3],
+			}
+
+			Expect(FilterTime(activities, since)).To(Equal(expected))
 		})
 	})
 })

@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/strava/go.strava"
 )
 
 const (
+	dateFormat      = "2006-01-02"
 	tokenEnvVar     = "STRAVA_ACCESS_TOKEN"
 	initialPage     = 1
 	DefaultPageSize = 100
@@ -17,7 +19,15 @@ const (
 
 func main() {
 	bikeName := flag.String("bike", "default", "bike name")
+	sinceStr := flag.String("since", "1970-01-01",
+		fmt.Sprintf("since date, in format %q", dateFormat),
+	)
 	flag.Parse()
+
+	since, err := time.Parse(dateFormat, *sinceStr)
+	if err != nil {
+		log.Fatalln("Error parsing date:", err)
+	}
 
 	token := os.Getenv(tokenEnvVar)
 	if token == "" {
@@ -36,6 +46,7 @@ func main() {
 	}
 
 	activities = FilterGear(activities, bike)
+	activities = FilterTime(activities, since)
 	fmt.Println("Activities:", activities)
 }
 
@@ -80,6 +91,18 @@ func GetActivities(client *strava.Client, pageSize int) (activities []*strava.Ac
 func FilterGear(activities []*strava.ActivitySummary, gear *strava.GearSummary) []*strava.ActivitySummary {
 	for i := 0; i < len(activities); i++ {
 		if activities[i].GearId != gear.Id {
+			activities = append(activities[:i], activities[i+1:]...)
+			i--
+		}
+	}
+
+	return activities
+}
+
+// Return a slice of `activities` that occurred after `since`.
+func FilterTime(activities []*strava.ActivitySummary, since time.Time) []*strava.ActivitySummary {
+	for i := 0; i < len(activities); i++ {
+		if activities[i].StartDate.Before(since) {
 			activities = append(activities[:i], activities[i+1:]...)
 			i--
 		}
